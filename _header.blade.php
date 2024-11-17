@@ -14,7 +14,6 @@
             @elseif (config('layout.header.self.theme') === 'dark')
                 @php $kt_logo_image = 'logo-light.png' @endphp
             @endif
-
             {{-- Header Menu --}}
             <div class="header-menu-wrapper header-menu-wrapper-left" id="kt_header_menu_wrapper">
                 @if(config('layout.aside.self.display') == false)
@@ -39,62 +38,83 @@
             <div></div>
         @endif
 
-            <div class="notice-board">
-                <div class="notice-content">
-                    <span>Your notice here. Update with the latest announcements!</span>
-                    <span>New policies have been implemented. Please check the updates.</span>
-                    <span>Next meeting scheduled for next Friday.</span>
-                    <span>Remember to submit your reports by the end of the month.</span>
-                </div>
+        {{-- Notice Board --}}
+        <div class="notice-board">
+            <div class="notice-content">
+                @foreach(getLatestNotices() as $index => $notice)
+                    <a href="{{ route('notice_boards.index') }}" class="notice-item" style="color: {{ $notice->priority == 'important' ? 'Orange; ' : 'Black' }}">
+                        <span>{{ $notice->title }}</span>
+                    </a>
+                    <span class="text-black-50">|</span>
+                @endforeach
             </div>
+        </div>
 
-            @include('layout.partials.extras._topbar')
-
-            <style>
-                .notice-board {
-                    overflow: hidden;
-                    white-space: nowrap;
-                    background-color: rgba(0, 0, 0, 0); /* Transparent background */
-                    padding: 5px; /* Reduced padding for a smaller size */
-                    margin-right: 20px; /* Space between notice board and top bar */
-                    font-size: 14px; /* Smaller font size */
-                    max-width: 1100px; /* Set a maximum width for the notice board */
-                }
-
-                .notice-content {
-                    display: inline-block;
-                    animation: scroll-left 20s linear infinite; /* Scroll animation */
-                    font-weight: bold; /* Bold text */
-                    color: white; /* White text color */
-                }
-
-                @keyframes scroll-left {
-                    0% {
-                        transform: translateX(100%); /* Start from the right */
-                    }
-                    100% {
-                        transform: translateX(-100%); /* Move to the left */
-                    }
-                }
-
-                /* Media query for mobile devices */
-                @media (max-width: 768px) {
-                    .notice-board {
-                        overflow: hidden;
-                        white-space: nowrap;
-                        background-color: rgba(0, 0, 0, 0); /* Transparent background */
-                        color: black; /* Black text color for mobile */
-                    }
-
-                    .notice-content {
-                        color: black; /* Ensure text is black on mobile */
-                    }
-                }
-            </style>
-
-
-
-
-
+        @include('layout.partials.extras._topbar')
     </div>
 </div>
+
+{{-- CSS Styling --}}
+<style>
+    .notice-board {
+        width: 80%;
+        overflow: hidden;
+        white-space: nowrap;
+        background-color: rgba(0, 0, 0, 0);
+        padding: 5px;
+        margin-right: 20px;
+        font-size: 18px;
+        max-width: 100%;
+    }
+
+    .notice-content {
+        display: inline-block;
+        animation: scroll-left 30s linear infinite;
+        font-weight: 600;
+        color: white;
+    }
+
+    .notice-content .notice-item {
+        text-decoration: none;
+        margin-left: 15px;
+        margin-right: 15px;
+    }
+
+    .notice-content .notice-item:hover {
+        color: #ddd;
+        text-decoration: underline;
+    }
+
+    @keyframes scroll-left {
+        0% {
+            transform: translateX(100%);
+        }
+        100% {
+            transform: translateX(-100%);
+        }
+    }
+
+    /* Media query for small mobile and tablet devices */
+    /* Mobile-specific styling */
+    @media (max-width: 768px) {
+        .notice-board {
+            width: 100%; /* Full-screen width on mobile */
+            overflow: hidden;
+            white-space: nowrap;
+            background-color: rgba(0, 0, 0, 0);
+        }
+
+        .notice-content {
+            color: black;
+            width: 100%;
+        }
+
+        .notice-content .notice-item {
+            color: black; /* Ensure normal text color is black */
+        }
+
+        .notice-content .notice-item.important {
+            color: red; /* Important text color for all devices */
+        }
+    }
+</style>
