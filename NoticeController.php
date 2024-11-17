@@ -2,86 +2,114 @@
 
 namespace App\Http\Controllers;
 
+use App\Data\Repositories\NoticeBoardRepository;
+use App\Http\Requests\NoticeBoardRequest;
 use Illuminate\Http\Request;
-use App\Models\Notice;
+use App\Data\Models\NoticeBoard;
 
-class NoticeController extends Controller
+
+
+
+class NoticeBoardController extends Controller
 {
 
+    private $noticeBoardRepository;
+    private $filePath = 'notice_boards';
 
-//    public function index()
-//    {
-//        $notices = Notice::all(); // Fetch all notices
-//        $page_title = 'Notices'; // Define the page title
-//        return view('notices.index', compact('notices', 'page_title')); // Pass it to the view
-//    }
-
-//    public function create()
-//    {
-//        // Define the status options
-//        $statusOptions = [
-//            'active' => 'Active',
-//            'inactive' => 'Inactive'
-//        ];
-//
-//        // Pass the variable to the view
-//        return view('notices.create', compact('statusOptions'));
-//    }
-
-
-
-    public function create()
+    public function __construct(
+        NoticeBoardRepository $noticeBoardRepository
+    )
     {
-        $page_title = "Create New Notice"; // Define your page title here
-        return view('notices.create', compact('page_title'));
-    }
-    public function index()
-    {
-        $notices = Notice::all(); // Fetch all notices or however you're retrieving them
-        $page_title = 'Notice Board'; // Define the page title
-
-        return view('notices.index', compact('notices', 'page_title')); // Pass it to the view
+        $this->noticeBoardRepository = $noticeBoardRepository;
     }
 
 
-//
-//    public function edit($id)
-//    {
-//        $notice = Notice::findOrFail($id);
-//        $page_title = 'Edit Notice'; // Define the page title
-//        return view('notices.edit', compact('notice', 'notice')); // Pass it to the view
-//    }
+    public function index(Request $request)
+    {
+        $latestNotices = NoticeBoard::latest()->take(5)->get();
 
+        $notice_boards = $this->noticeBoardRepository->getAllByCompanyId(getLoggedInUserCompanyId());
+        $page_title = 'Notice Board Manager';
+        $formTitle = 'Notice List';
+        $page_description = '';
 
+        $data = [
+            'page_title' => $page_title,
+            'page_description' => $page_description,
+            'formTitle' => $formTitle,
+            'notice_boards' => $notice_boards,
+            'latestNotices' => $latestNotices,
+        ];
 
-    public function store(Request $request)
+        return view("{$this->filePath}.index", $data);
+    }
+
+    public function create(Request $request)
+    {
+        $page_title = 'Notice Board Manager';
+        $page_description = '';
+        $formTitle = 'Create New Notice';
+        $data = [
+            'page_title' => $page_title,
+            'page_description' => $page_description,
+            'formTitle' => $formTitle,
+            'noticeStatus' => getActiveInactiveStatusList(),
+            'noticePriority' => getNoticePriorityStatusList()
+        ];
+
+        return view("{$this->filePath}.create", $data);
+    }
+
+    public function store(NoticeBoardRequest $request)
+    {
+        $validatedData = $request->validated();
+        $validatedData['company_id'] = getLoggedInUserCompanyId();
+        $validatedData['created_by'] = getLoggedInUserId();
+        $validatedData['updated_by'] = getLoggedInUserId();
+        $validatedData['start_date'] = changeDateTimeFormat($request->start_date,'Y-m-d');
+        $validatedData['end_date'] = changeDateTimeFormat($request->end_date,'Y-m-d');
+        $this->noticeBoardRepository->create($validatedData);
+
+        return redirect()->route("{$this->filePath}.index");
+    }
+    public function edit(Request $request, $id)
+    {
+        $noticeBoard = $this->noticeBoardRepository->findOrFail($id);
+        $page_title = 'Notice Board Manager';
+        $page_description = '';
+        $formTitle = 'Update Notice';
+
+        $data = [
+            'page_title'        => $page_title,
+            'page_description'  => $page_description,
+            'formTitle'         => $formTitle,
+            'noticeBoard'       => $noticeBoard,
+            'noticeStatus'      => getActiveInactiveStatusList(),
+            'noticePriority'    => getNoticePriorityStatusList()
+        ];
+
+        return view("{$this->filePath}.edit", $data);
+    }
+
+    public function update(Request $request, $id)
     {
         $validatedData = $request->validate([
-            'title' => 'required|string|max:250',
-            'description' => 'required|string',
-            'status' => 'required|in:active,inactive',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date',
-            'priority' => 'required|in:normal,important',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'required',
+            'priority' => 'required',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
         ]);
 
-        $notice = new Notice([
-            'title' => $validatedData['title'],
-            'description' => $validatedData['description'],
-            'status' => $validatedData['status'],
-            'start_date' => $validatedData['start_date'],
-            'end_date' => $validatedData['end_date'],
-            'priority' => $validatedData['priority'],
-            'company_id' => auth()->user()->company_id, // or set a default value
-            'created_by' => auth()->user()->id,
-            'updated_by' => auth()->user()->id,
-        ]);
+        $validatedData['updated_by'] = getLoggedInUserId();
+        $validatedData['start_date'] = $request->start_date ? changeDateTimeFormat($request->start_date, 'Y-m-d') : null;
+        $validatedData['end_date'] = $request->end_date ? changeDateTimeFormat($request->end_date, 'Y-m-d') : null;
 
-        $notice->save();
+        $noticeBoard = $this->noticeBoardRepository->findOrFail($id);
+        $this->noticeBoardRepository->update($noticeBoard, $validatedData);
 
-        return redirect()->route('notices.index')->with('success', 'Notice created successfully!');
+        return redirect()->route('notice_boards.index');
     }
-
-
 
 }
