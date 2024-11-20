@@ -1,0 +1,73 @@
+<div class="modal" id="noticeModal" tabindex="-1" role="dialog" aria-labelledby="noticeModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="noticeModalLabel">Notice Board</h5>
+                <button type="button" class="close text-white-50" aria-label="Close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 450px; overflow-y: auto;">
+                @foreach(getLatestNotices() as $notice)
+                    <div class="alert alert-dismissible w-100 p-3 mb-3 {{ $loop->iteration % 2 == 0 ? 'bg-light' : 'bg-light-gray' }}">
+                        <h3 style="font-weight: bold; color: {{ strtolower($notice->priority) === 'important' ? 'red' : 'black' }};">
+                            {{ $notice->title }}
+                        </h3>
+                        <p class="font-size-h5 mb-0">{{ $notice->description }}</p>
+                        <p class="text-dark-50 text-right"><i class="far fa-calendar-alt mr-1"></i> {{ changeDateTimeFormat($notice->updated_at, 'd-m-Y h:i A') }}</p>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body.modal-open { overflow: hidden; }
+    .modal-body { max-height: 400px; overflow-y: auto; }
+    .modal-body::-webkit-scrollbar { width: 8px; }
+    .modal-body::-webkit-scrollbar-thumb { background-color: #888; border-radius: 4px; }
+    .modal-body::-webkit-scrollbar-thumb:hover { background-color: #555; }
+    .modal-body::-webkit-scrollbar-track { background-color: #f0f0f0; }
+</style>
+
+
+<!-- JavaScript -->
+<script>
+    function openModal() {
+        document.getElementById('noticeModal').style.display = 'block';
+        document.body.classList.add('modal-open');
+    }
+
+    function closeModal() {
+        document.getElementById('noticeModal').style.display = 'none';
+        document.body.classList.remove('modal-open');
+    }
+
+    window.onclick = function(event) {
+        if (event.target === document.getElementById('noticeModal')) closeModal();
+    }
+
+    // Hover-to-Pause Functionality
+    const scrollContent = document.querySelector('.notice-content');
+
+    scrollContent.addEventListener('mouseenter', () => {
+        scrollContent.style.animationPlayState = 'paused';
+    });
+
+    scrollContent.addEventListener('mouseleave', () => {
+        scrollContent.style.animationPlayState = 'running';
+    });
+
+    // Calculate duration dynamically
+    const scrollContainer = document.querySelector('.notice-board');
+    const speed = 75; // Pixels per second
+
+    const calculateScrollDuration = (content, container, speed) => {
+        const contentWidth = content.offsetWidth;
+        const containerWidth = container.offsetWidth;
+        const totalDistance = contentWidth + containerWidth;
+        return totalDistance / speed;
+    };
+
+    const duration = calculateScrollDuration(scrollContent, scrollContainer, speed);
+    scrollContent.style.animation = `scroll-left ${duration}s linear infinite`;
+</script>
