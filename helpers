@@ -1,0 +1,978 @@
+<?php
+
+use Illuminate\Support\Facades\File;
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
+use App\Data\Models\NoticeBoard;
+use Illuminate\Database\Eloquent\Collection;
+
+if (!function_exists('getLoggedInUserCompanyId')) {
+    /**
+     * Return company id of user from domain he requested
+     */
+
+    function getLoggedInUserCompanyId()
+    {
+        return session('company')['id'];
+    }
+}
+
+if (!function_exists('getCompanyLogoUrl')) {
+    /**
+     * Return logo url of the company of from requested domain.
+     * General settings has been set to session after logged in
+     * @return null
+     */
+
+    function getCompanyLogoUrl()
+    {
+        $generalSettings = session('general_settings');
+        if($generalSettings->logo)
+            return $generalSettings->logo;
+        else
+            return asset('media/logos/chokrojan_logo.png');
+    }
+}
+if (!function_exists('getChokrojanLogoUrl')) {
+    /**
+     * Return logo url of the company of from requested domain.
+     * General settings has been set to session after logged in
+     * @return null
+     */
+
+    function getChokrojanLogoUrl()
+    {
+        return asset('media/logos/chokrojan_logo.png');
+    }
+}
+
+
+if (!function_exists('getLoggedInUserCompanyName')) {
+    /**
+     * Return company name of logged in user.
+     * General settings has been set to session after logged in
+     * @return null
+     */
+
+    function getLoggedInUserCompanyName()
+    {
+        $generalSettings = session('general_settings');
+        return $generalSettings->site_name;
+    }
+}
+if (!function_exists('getLoggedInUserInfo')) {
+    /**
+     * Return id of logged in user.
+     * @return null
+     */
+    function getLoggedInUserInfo()
+    {
+        $user = session('user');
+        return $user;
+    }
+}
+if (!function_exists('getLoggedInUserId')) {
+    /**
+     * Return id of logged in user.
+     * @return null
+     */
+    function getLoggedInUserId()
+    {
+        $user = session('user');
+        return $user->id;
+    }
+}
+if (!function_exists('getLoggedInUserName')) {
+    /**
+     * Return name of logged in user.
+     * @return null
+     */
+    function getLoggedInUserName()
+    {
+        $user = session('user');
+        return $user->name;
+    }
+}
+if (!function_exists('getLoggedInUserRoleId')) {
+    /**
+     * Return name of logged in user.
+     * @return null
+     */
+    function getLoggedInUserRoleId()
+    {
+        $user_role = session('user_roles')[0];
+        return $user_role->id;
+    }
+}
+if (!function_exists('getLoggedInUserRoleName')) {
+    /**
+     * Return name of logged in user.
+     * @return null
+     */
+    function getLoggedInUserRoleName()
+    {
+        $user_role = session('user_roles')[0];
+        return $user_role->name;
+    }
+}
+if (!function_exists('getLoggedInUserRoleTitle')) {
+    /**
+     * Return name of logged in user.
+     * @return null
+     */
+    function getLoggedInUserRoleTitle()
+    {
+        $user_role = session('user_roles')[0];
+        return $user_role->title;
+    }
+}
+if (!function_exists('getLoggedInUserPermission')) {
+    /**
+     * Return name of logged in user.
+     * @return null
+     */
+    function getLoggedInUserPermission($permission)
+    {
+        return auth()->user()->can($permission);
+    }
+}
+if (!function_exists('getLoggedInUserPassengerOptional')) {
+    /**
+     * Return counter id of logged in user.
+     * @return null
+     */
+    function getLoggedInUserPassengerOptional()
+    {
+        $user = session('user');
+        return $user->passenger_optional;
+    }
+}
+if (!function_exists('getLoggedInUserCounterId')) {
+    /**
+     * Return counter id of logged in user.
+     * @return null
+     */
+    function getLoggedInUserCounterId()
+    {
+        $user = session('user');
+        return $user->counter_id;
+    }
+}
+if (!function_exists('getLoggedInUserCounterName')) {
+    /**
+     * Return counter name of logged in user.
+     * @return null
+     */
+    function getLoggedInUserCounterName()
+    {
+        return empty(auth()->user()->counter) ? "" : auth()->user()->counter->name;
+    }
+}
+if (!function_exists('getLoggedInUserStationId')) {
+    /**
+     * Return station id of logged in user.
+     * @return null
+     */
+    function getLoggedInUserStationId()
+    {
+        $user = session('user');
+        return $user->station_id;
+    }
+}
+if (!function_exists('getLoggedInUserStationName')) {
+    /**
+     * Return station name of logged in user.
+     * @return null
+     */
+    function getLoggedInUserStationName()
+    {
+        return empty(auth()->user()->counter->station) ? "" : auth()->user()->counter->station->name;
+    }
+}
+if (!function_exists('getLoggedInUserCounterCredit')) {
+    /**
+     * Return counter name of logged in user.
+     * @return null
+     */
+    function getLoggedInUserCounterCredit()
+    {
+        return empty(auth()->user()->counter) ? 0 : auth()->user()->counter->credit_balance;
+    }
+}
+if (!function_exists('getLoggedInUserCounterPermittedCredit')) {
+    /**
+     * Return counter name of logged in user.
+     * @return null
+     */
+    function getLoggedInUserCounterPermittedCredit()
+    {
+        return empty(auth()->user()->counter) ? 0 : auth()->user()->counter->permitted_credit;
+    }
+}
+if (!function_exists('getLoggedInUserCounterCreditLimit')) {
+    /**
+     * Return counter name of logged in user.
+     * @return null
+     */
+    function getLoggedInUserCounterCreditLimit()
+    {
+        return empty(auth()->user()->counter) ? 0 : auth()->user()->counter->credit_limit;
+    }
+}
+if (!function_exists('getLoggedInUserCounterIsCommissionCounter')) {
+    /**
+     * Return counter name of logged in user.
+     * @return null
+     */
+    function getLoggedInUserCounterIsCommissionCounter()
+    {
+        return empty(auth()->user()->counter) ? 0 : auth()->user()->counter->is_commission_counter;
+    }
+}
+
+if (!function_exists('getFormattedRoleNames')) {
+    /**
+     * Return formatted roles of logged in user
+     */
+
+    function getFormattedRoleNames()
+    {
+        return session('user_roles')->pluck('name');
+    }
+}
+if (!function_exists('currentUserLoginRedirectTicketIssuePagePermissionCheck')) {
+    /**
+     * Return formatted roles of logged in user
+     */
+
+    function currentUserLoginRedirectTicketIssuePagePermissionCheck($userRoleId)
+    {
+        if($userRoleId == config('global_variables.role.manager'))
+            return true;
+        else if($userRoleId == config('global_variables.role.operation-manager'))
+            return true;
+        else if($userRoleId == config('global_variables.role.operation-master'))
+            return true;
+        else if($userRoleId == config('global_variables.role.counter-manager'))
+            return true;
+        else if($userRoleId == config('global_variables.role.counter-master'))
+            return true;
+        else if($userRoleId == config('global_variables.role.supervisor'))
+            return true;
+        else
+            return false;
+    }
+}
+
+if (!function_exists('currentUserTripSheetViewPermissionCheck')) {
+    /**
+     * Return formatted roles of logged in user
+     */
+
+    function currentUserTripSheetViewPermissionCheck()
+    {
+        $userRoleId = getLoggedInUserRoleId();
+        if($userRoleId == config('global_variables.role.super-admin'))
+            return true;
+        else if($userRoleId == config('global_variables.role.admin'))
+            return true;
+        else if($userRoleId == config('global_variables.role.accountant'))
+            return true;
+        else if($userRoleId == config('global_variables.role.manager'))
+            return true;
+        else if($userRoleId == config('global_variables.role.counter-manager'))
+            return true;
+        else if($userRoleId == config('global_variables.role.counter-master'))
+            return true;
+        else if($userRoleId == config('global_variables.role.supervisor'))
+            return true;
+        else
+            return false;
+    }
+}
+
+if (!function_exists('currentUserTripSheetAllCounterViewPermissionCheck')) {
+    /**
+     * Return formatted roles of logged in user
+     */
+
+    function currentUserTripSheetAllCounterViewPermissionCheck()
+    {
+        $userRoleId = getLoggedInUserRoleId();
+        if($userRoleId == config('global_variables.role.super-admin'))
+            return true;
+        else if($userRoleId == config('global_variables.role.admin'))
+            return true;
+        else if($userRoleId == config('global_variables.role.accountant'))
+            return true;
+        else if($userRoleId == config('global_variables.role.manager'))
+            return true;
+        else if($userRoleId == config('global_variables.role.counter-manager'))
+            return true;
+        else if($userRoleId == config('global_variables.role.supervisor'))
+            return true;
+        else
+            return false;
+    }
+}
+
+if (!function_exists('currentUserBookedTicketSellPermissionCheck')) {
+    /**
+     * Return formatted roles of logged in user
+     */
+
+    function currentUserBookedTicketSellPermissionCheck($ticketInfo)
+    {
+        $userRoleId = getLoggedInUserRoleId();
+        if($userRoleId == config('global_variables.role.super-admin'))
+            return true;
+        else if($userRoleId == config('global_variables.role.admin'))
+            return true;
+        else if($userRoleId == config('global_variables.role.operation-admin'))
+            return true;
+        else if($userRoleId == config('global_variables.role.manager'))
+            return true;
+        else if( ($userRoleId == config('global_variables.role.counter-manager') || $userRoleId == config('global_variables.role.operation-manager') || $userRoleId == config('global_variables.role.operation-master') ) && $ticketInfo->counter_id==getLoggedInUserCounterId() )
+            return true;
+        else if($userRoleId == config('global_variables.role.counter-master') && $ticketInfo->counter_id==getLoggedInUserCounterId() && $ticketInfo->counter_master_id==getLoggedInUserId())
+            return true;
+        else
+            return false;
+    }
+}
+
+if (!function_exists('getUserSelectedRoleWiseCounterSetPermission')) {
+    /**
+     * Return formatted roles of logged in user
+     */
+
+    function getUserSelectedRoleWiseCounterSetPermission($userRoleId)
+    {
+        if($userRoleId == config('global_variables.role.counter-master'))
+            return true;
+        else if($userRoleId == config('global_variables.role.operation-master'))
+            return true;
+        else if($userRoleId == config('global_variables.role.counter-manager'))
+            return true;
+        else if($userRoleId == config('global_variables.role.operation-manager'))
+            return true;
+        else if($userRoleId == config('global_variables.role.manager'))
+            return true;
+        else
+            return false;
+    }
+}
+
+if (!function_exists('flushFileBasedSession')) {
+    /**
+     * Delete all sessions of logged in users
+     * @return null
+     */
+
+    function flushFileBasedSession()
+    {
+        $path = config('session.files');
+        if (File::exists($path)) {
+            $files = File::allFiles($path);
+            File::delete($files);
+            error_log(count($files) . ' sessions flushed');
+        } else {
+            error_log('check your session path exists');
+        }
+    }
+}
+
+if (!function_exists('getCompanyGeneralSettings')) {
+    /**
+     * Return general settings info of loged in user's company from domain he requested
+     */
+
+    function getCompanyGeneralSettings()
+    {
+        return session('general_settings');
+    }
+}
+
+if (!function_exists('changeDateTimeFormat')) {
+    /**
+     * Delete all sessions of logged in users
+     * @return null
+     */
+
+    function changeDateTimeFormat($date, $format)
+    {
+        if(is_null($date)){
+            return null;
+        }else{
+            return Carbon\Carbon::parse($date)->format($format);
+        }
+    }
+}
+
+if (!function_exists('randomCodeGenerate')) {
+    /**
+     * Delete all sessions of logged in users
+     * @return null
+     */
+
+    function randomCodeGenerate()
+    {
+        return mt_rand(100000, 999999);
+    }
+}
+
+if (!function_exists('generateInvoiceNumber')) {
+    /**
+     * Delete all sessions of logged in users
+     * @return null
+     */
+
+    function generateInvoiceNumber()
+    {
+        return strtoupper("CHK" .substr(bin2hex(random_bytes(7)),0,13));
+    }
+}
+
+if (!function_exists('getReligionList')) {
+    /**
+     * return religion list
+     * @return array
+     */
+
+    function getReligionList()
+    {
+        return [
+            'buddhism'      => 'Buddhism',
+            'christianity'  => 'Christianity',
+            'hinduism'      => 'Hinduism',
+            'islam'         => 'Islam',
+            'other'         => 'Other',
+        ];
+    }
+}
+
+
+
+if (!function_exists('getGenderList')) {
+    /**
+     * return gender list
+     * @return array
+     */
+
+    function getGenderList()
+    {
+        return [
+            'male'      => 'Male',
+            'female'    => 'Female',
+        ];
+    }
+
+}
+
+
+if (!function_exists('getBloodGroupList')) {
+    /**
+     * return blood group list
+     * @return array
+     */
+
+    function getBloodGroupList()
+    {
+        return [
+            'a+'    => 'A+',
+            'a-'    => 'A-',
+            'b+'    => 'B+',
+            'b-'    => 'B-',
+            'ab+'   => 'AB+',
+            'ab-'   => 'AB-',
+            'o+'    => 'O+',
+            'o-'    => 'O-',
+        ];
+    }
+}
+
+
+if (!function_exists('getJobTypeList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+
+    function getJobTypeList()
+    {
+        return [
+            'permanent'     => 'Permanent',
+            'temporary'     => 'Temporary',
+            'other'         => 'Other',
+        ];
+    }
+}
+
+
+if (!function_exists('getStaffStatusList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+
+    function getStaffStatusList()
+    {
+        return [
+            'active'    => 'Active',
+            'inactive'  => 'Inactive',
+            'suspend'   => 'Suspend'
+        ];
+    }
+}
+
+
+
+if (!function_exists('getUserStatusList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+
+    function getUserStatusList()
+    {
+        return [
+            'active'    => 'Active',
+            'inactive'  => 'Inactive',
+            'blocked'   => 'Blocked',
+        ];
+    }
+}
+
+if (!function_exists('getBusStatusList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+
+    function getBusStatusList()
+    {
+        return [
+            'running'   => 'Running',
+            'broken'    => 'Broken',
+            'retired'   => 'Retired'
+        ];
+    }
+}
+if (!function_exists('getScheduleStatusList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+
+    function getScheduleStatusList()
+    {
+        return [
+            'active'    => 'Active',
+            'inactive'  => 'Inactive',
+            'hide'      => 'Hide',
+        ];
+    }
+}
+if (!function_exists('getTripStatusList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+
+    function getTripStatusList()
+    {
+        return [
+            'ready'     => 'Ready',
+            'running'   => 'Running',
+            'finished'  => 'Finished',
+            'cancelled' => 'Cancelled',
+        ];
+    }
+}
+if (!function_exists('getActiveInactiveStatusList')) {
+    /**
+     * return active inactive status list
+     * @return array
+     */
+
+    function getActiveInactiveStatusList()
+    {
+        return [
+            'active'    => 'Active',
+            'inactive'  => 'Inactive',
+        ];
+    }
+}
+if (!function_exists('getNoticePriorityList')) {
+    /**
+     * return active inactive status list
+     * @return array
+     */
+
+    function getNoticePriorityList()
+    {
+        return [
+            'normal'        => 'Normal',
+            'important'     => 'Important',
+        ];
+    }
+}
+if (!function_exists('getLatestNotices')) {
+    /**
+     * Fetch the latest notices from the NoticeBoard.
+     *
+     * @return Collection
+     */
+    function getLatestNotices()
+    {
+        return NoticeBoard::with('createdBy') // Eager load the related user who created the notice
+            ->where('company_id', getLoggedInUserCompanyId())
+            ->where('status', 'active')
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->orderBy('updated_at', 'desc')
+            ->take(10)
+            ->get();
+    }
+}
+if (!function_exists('getTicketStatusList')) {
+    /**
+     * return active inactive status list
+     * @return array
+     */
+
+    function getTicketStatusList()
+    {
+        return [
+            'booked'    => 'Booked',
+            'issued'    => 'Issued',
+            'cancelled' => 'Cancelled',
+        ];
+    }
+}
+if (!function_exists('getRouteTypeList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+
+    function getRouteTypeList()
+    {
+        return [
+            'bus'       => 'Bus',
+            'launch'    => 'Launch'
+        ];
+    }
+}
+if (!function_exists('getIncomePurposeTypeList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+
+    function getIncomePurposeTypeList()
+    {
+        return [
+            'bus'       => 'Bus',
+            'company'   => 'Company'
+        ];
+    }
+}
+if (!function_exists('getExpensePurposeTypeList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+
+    function getExpensePurposeTypeList()
+    {
+        return [
+            'bus'       => 'Bus',
+            'company'   => 'Company'
+        ];
+    }
+}
+if (!function_exists('getCounterTypeList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+
+    function getCounterTypeList()
+    {
+        return [
+            '0' => 'Own',
+            '1' => 'Commission'
+        ];
+    }
+}
+if (!function_exists('getCounterCreditLimitStatusList')) {
+    /**
+     * return active inactive status list
+     * @return array
+     */
+
+    function getCounterCreditLimitStatusList()
+    {
+        return [
+            '0' => 'Inactive',
+            '1' => 'Active',
+        ];
+    }
+}
+if (!function_exists('getVehicleTypeWiseColor')) {
+    /**
+     * return job type list
+     * @return array
+     */
+
+    function getVehicleTypeWiseColor($id)
+    {
+        $vechicleTypeWiseColor = [
+            '1' => 'success',
+            '2' => 'warning'
+        ];
+        return $vechicleTypeWiseColor[$id];
+    }
+}
+
+if (!function_exists('getSeatTypeColorList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+    function getSeatTypeColorList()
+    {
+        return [
+            "bg-light-black",
+            "bg-light-gray",
+            "bg-light-gray",
+            "bg-gray",
+            "bg-dark-gray",
+            "bg-gray",
+            "bg-dark-gray"
+        ];
+    }
+}
+if (!function_exists('getWeekDayNameList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+    function getWeekDayNameList()
+    {
+        return [
+            "Sun",
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri",
+            "Sat"
+        ];
+    }
+}
+if (!function_exists('getSalesReportFilterByList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+
+    function getSalesReportFilterByList()
+    {
+        return [
+            'issued_at'     => 'Issue Date',
+            'boarding_counter_time'  => 'Journey Date'
+        ];
+    }
+}
+if (!function_exists('getBookedReportFilterByList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+
+    function getBookedReportFilterByList()
+    {
+        return [
+            'booked_at'     => 'Booked Date',
+            'boarding_counter_time'  => 'Journey Date'
+        ];
+    }
+}
+if (!function_exists('getCancelledReportFilterByList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+
+    function getCancelledReportFilterByList()
+    {
+        return [
+            'cancelled_at'  => 'Cancelled Date',
+            'boarding_counter_time'  => 'Journey Date'
+        ];
+    }
+}
+
+if (!function_exists('getCancelledReportCancelledFromList')) {
+    /**
+     * return job type list
+     * @return array
+     */
+
+    function getCancelledReportCancelledFromList()
+    {
+        return [
+            'booked'  => 'Booked',
+            'issued'  => 'Issued'
+        ];
+    }
+}
+
+if (! function_exists('calculateCounterCommission')) {
+
+    function calculateCounterCommission($trip, $counterCommission,$seatFares)
+    {
+        $commission = 0;
+        if($counterCommission!=null) {
+            if ($trip->vehicle_type_id == config('global_variables.bus-type.non-ac')) {
+                $commission = $counterCommission[0]->commission_nonac;
+            } else {
+                $commission = $counterCommission[0]->commission_ac;
+            }
+            if ($counterCommission[0]->commission_percentage == 1) {
+                $commission = ($seatFares / 100) * $commission;
+            }
+        }
+        return $commission;
+    }
+}
+
+if (! function_exists('generateTicketSmsMessage')) {
+
+    function generateTicketSmsMessage($ticket)
+    {
+        $messageContent = sprintf("%s,\n%s\n%s\nID: %d\nPIN: %d\n%s\nTIME: %s\nSEATS: %s\nFARE: %s\n%s",
+            session('general_settings')->site_name,
+            $ticket->passenger_name,
+            $ticket->boarding_station."->".$ticket->dropping_station,
+            $ticket->id,
+            $ticket->ticket_pin,
+            $ticket->coach_number,
+            changeDateTimeFormat($ticket->boarding_counter_time,'j M Y, h:i A'),
+            $ticket->seat_numbers,
+            $ticket->grand_total,
+            session('general_settings')->contact_number
+        );
+        return $messageContent;
+    }
+}
+
+if (! function_exists('sendSms')) {
+
+    function sendSms($mobileNumber, $message)
+    {
+        $http = new Client();
+        if(session('general_settings')->counter_sms_send==1) { //for all current mobi reach
+            try {
+                $response = $http->post(config('app.sms_mobireach_url', ''), [
+                    'form_params'   => [
+                        'Username'  => config('app.sms_mobireach_userName'),
+                        'Password'  => config('app.sms_mobireach_password'),
+                        'From'      => config('app.sms_mobireach_from'),
+                        'To'        => $mobileNumber,
+                        'Message'   => $message
+                    ]
+                ]);
+                $responseData = json_encode(simplexml_load_string($response->getBody()));
+                Log::debug($mobileNumber."----".$message);
+                return $responseData;
+            } catch (Exception $ex) {
+                Log::error($ex);
+                $responseBody = json_encode(simplexml_load_string($ex->getResponse()->getBody(true)));
+                Log::debug($responseBody);
+                return $responseBody;
+            }
+
+        } else if(session('general_settings')->counter_sms_send==2) { //new bulk sms bd.net
+            try {
+                $response = $http->post(config('app.sms_bulksmsbdnet_url', ''), [
+                    'form_params' => [
+                        'api_key' => config('app.sms_bulksmsbdnet_apiKey'),
+                        'senderid' => config('app.sms_bulksmsbdnet_senderid'),
+                        'number' => $mobileNumber,
+                        'message' => $message
+                    ]
+                ]);
+                $responseData = $response->getBody();
+                //Log::debug($responseData);
+                return $responseData;
+            } catch (Exception $ex) {
+                Log::error($ex);
+                $responseBody = $ex->getResponse()->getBody(true);
+                Log::debug($responseBody);
+                return $responseBody;
+            }
+        } else if(session('general_settings')->counter_sms_send==3) { //only for saintmartin hyundai bulk sms bd
+            try {
+                $response = $http->post(config('app.sms_bulksmsbd_url', ''), [
+                    'form_params' => [
+                        'username' => config('app.sms_bulksmsbd_userName'),
+                        'password' => config('app.sms_bulksmsbd_password'),
+                        'number' => $mobileNumber,
+                        'message' => $message
+                    ]
+                ]);
+                $responseData = json_encode(array('response' => strval($response->getBody())));
+                //Log::debug($responseData);
+                return $responseData;
+            } catch (Exception $ex) {
+                Log::error($ex);
+                $responseBody = $ex->getResponse()->getBody(true);
+                Log::debug($responseBody);
+                return $responseBody;
+            }
+        }
+
+
+        /*try {
+            $response = $http->post(config('app.sms_mobireach_url', ''), [
+                'form_params'   => [
+                    'Username'  => config('app.sms_mobireach_userName'),
+                    'Password'  => config('app.sms_mobireach_password'),
+                    'From'      => config('app.sms_mobireach_from'),
+                    'To'        => $mobileNumber,
+                    'Message'   => $message
+                ]
+            ]);
+            $responseData = json_encode(simplexml_load_string($response->getBody()));
+            //Log::debug($responseData);
+            return $responseData;
+        } catch (Exception $ex) {
+            Log::error($ex);
+            $responseBody = $ex->getResponse()->getBody(true);
+            Log::debug($responseBody);
+            return $responseBody;
+        }*/
+        /*try {
+            $response = $http->request('GET',config('app.sms_pisms_url', ''), [
+                'query'   => [
+                    'user'      => config('app.sms_pisms_userName'),
+                    'password'  => config('app.sms_pisms_password'),
+                    'campaign'  => config('app.sms_pisms_campaign'),
+                    'number'    => $mobileNumber,
+                    'text'      => $message
+                ]
+            ]);
+            $responseData = json_encode(array('response' => strval($response->getBody())));
+            //Log::debug($responseData);
+            return $responseData;
+        } catch (Exception $ex) {
+            Log::error($ex);
+            $responseBody = $ex->getResponse()->getBody(true);
+            Log::debug($responseBody);
+            return $responseBody;
+        }*/
+    }
+}
