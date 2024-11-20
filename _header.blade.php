@@ -37,47 +37,50 @@
         @else
             <div></div>
         @endif
-
-        {{-- Notice Board --}}
-        <div class="notice-board">
-            <div class="notice-content">
-                @foreach(getLatestNotices() as $index => $notice)
-                    <a href="{{ route('notice_boards.index') }}" class="notice-item" style="color: {{ $notice->priority == 'important' ? 'Orange; ' : 'Black' }}">
-                        <span>{{ $notice->title }}</span>
-                    </a>
-                    <span class="text-black-50">|</span>
-                @endforeach
+            <div style="width: 100%;">
+                <!-- Notice Board -->
+                <div class="notice-board">
+                    <div class="notice-content">
+                        @foreach(getLatestNotices() as $notice)
+                            <a class="notice-item" onclick="openModal(); return false;"
+                               style="color: {{ $notice->priority == 'important' ? 'orange' : 'black' }}">
+                                <span>{{ $notice->title }}</span>
+                            </a>
+                            <span class="text-white-50">|</span>
+                        @endforeach
+                    </div>
+                </div>
             </div>
-        </div>
-
-        @include('layout.partials.extras._topbar')
+            {{-- Here,I Included the Notice List Modal --}}
+            @include('notice_boards.partials._notice_list')
+            @include('layout.partials.extras._topbar')
     </div>
 </div>
-
 {{-- CSS Styling --}}
 <style>
     .notice-board {
-        width: 80%;
+        height: 40px;
         overflow: hidden;
-        white-space: nowrap;
+        position: relative;
         background-color: rgba(0, 0, 0, 0);
         padding: 5px;
-        margin-right: 20px;
+        margin-left: 10px;
         font-size: 18px;
-        max-width: 100%;
     }
 
     .notice-content {
         display: inline-block;
-        animation: scroll-left 30s linear infinite;
+        white-space: nowrap;
+        position: absolute;
+        animation: scroll-left 30s linear infinite; /* Define default duration */
         font-weight: 600;
-        color: white;
     }
 
     .notice-content .notice-item {
         text-decoration: none;
         margin-left: 15px;
         margin-right: 15px;
+        cursor: pointer;
     }
 
     .notice-content .notice-item:hover {
@@ -86,35 +89,34 @@
     }
 
     @keyframes scroll-left {
-        0% {
-            transform: translateX(100%);
+        from {
+            transform: translateX(100%); /* Start from the right edge */
         }
-        100% {
-            transform: translateX(-100%);
+        to {
+            transform: translateX(-100%); /* Move to the left edge */
         }
     }
 
-    /* Media query for small mobile and tablet devices */
-    /* Mobile-specific styling */
+    /* Media query for mobile devices */
     @media (max-width: 768px) {
         .notice-board {
-            width: 100%; /* Full-screen width on mobile */
             overflow: hidden;
             white-space: nowrap;
             background-color: rgba(0, 0, 0, 0);
+            color: black;
+            margin-left: 0px;
         }
-
         .notice-content {
             color: black;
-            width: 100%;
         }
-
         .notice-content .notice-item {
-            color: black; /* Ensure normal text color is black */
+            color: black;
+            margin-left: 15px;
+            margin-right: 15px;
         }
-
-        .notice-content .notice-item.important {
-            color: red; /* Important text color for all devices */
+        .header {
+            background-image: linear-gradient(to right, #109e81, #24c58a);
         }
     }
+
 </style>
