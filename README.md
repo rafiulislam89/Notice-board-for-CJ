@@ -1,6 +1,6 @@
 # Notice-board-for-CJ
 
-Did it for Chokrojan
+Did it for Chokrojan's stakeholder requirements.
 
 # Visitor Count  
 <p align="center">
